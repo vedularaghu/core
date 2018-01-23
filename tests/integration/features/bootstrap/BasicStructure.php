@@ -94,7 +94,7 @@ trait BasicStructure {
 	}
 
 	/**
-	 * @Given /^using api version "([^"]*)"$/
+	 * @Given /^using (?:api|API) version "([^"]*)"$/
 	 * @param string $version
 	 */
 	public function usingApiVersion($version) {
@@ -102,7 +102,7 @@ trait BasicStructure {
 	}
 
 	/**
-	 * @Given /^as an "([^"]*)"$/
+	 * @Given /^as (?:an|user) "([^"]*)"$/
 	 * @param string $user
 	 */
 	public function asAn($user) {
