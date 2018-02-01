@@ -524,11 +524,13 @@ class AppManager implements IAppManager {
 	public function getAppWebPath($appId) {
 		if (($appRoot = $this->findAppInDirectories($appId)) !== false) {
 			$ocWebRoot = \OC::$WEBROOT;
-			while (strpos($appRoot['url'], '..') === 0) {
-				$appRoot['url'] = substr($appRoot['url'],3);
+			// consider all relative ../ in the app web path as an adjustment
+			// for oC web root
+			while (strpos($appRoot['url'], '../') === 0) {
+				$appRoot['url'] = substr($appRoot['url'], 3);
 				$ocWebRoot = dirname($ocWebRoot);
 			}
-			return $ocWebRoot . '/' . $appRoot['url'];
+			return $ocWebRoot . '/' . ltrim($appRoot['url'], '/');
 		}
 		return false;
 	}
