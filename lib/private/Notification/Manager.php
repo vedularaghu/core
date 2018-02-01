@@ -22,7 +22,7 @@
 
 namespace OC\Notification;
 
-
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use OCP\Notification\IApp;
 use OCP\Notification\IManager;
 use OCP\Notification\INotification;
@@ -30,8 +30,13 @@ use OCP\Notification\INotifier;
 use OCP\Notification\Exceptions\IncompleteSerializationException;
 use OCP\Notification\Exceptions\IncompleteDeserializationException;
 use OCP\Notification\Exceptions\CannotDeserializeException;
+use OCP\Notification\Events\AbstractRegisterAppEvent;
+use OC\Notification\Events\RegisterAppEvent;
 
 class Manager implements IManager {
+	/** @var EventDispatcherInterface */
+	protected $dispatcher;
+
 	/** @var IApp[] */
 	protected $apps;
 
@@ -50,13 +55,20 @@ class Manager implements IManager {
 	/** @var \Closure[] */
 	protected $notifiersInfoClosures;
 
-	public function __construct() {
+	/** @var IApp[] */
+	protected $builtAppsHolder;
+
+	public function __construct(EventDispatcherInterface $dispatcher) {
+		$this->dispatcher = $dispatcher;
+
 		$this->apps = [];
 		$this->notifiers = [];
 		$this->notifiersInfo = [];
 		$this->appsClosures = [];
 		$this->notifiersClosures = [];
 		$this->notifiersInfoClosures = [];
+
+		$this->builtAppsHolder = [];
 	}
 
 	/**
@@ -86,6 +98,13 @@ class Manager implements IManager {
 	}
 
 	/**
+	 * INTERNAL USE ONLY!! This method isn't part of the IManager interface
+	 */
+	public function registerBuiltApp(IApp $app) {
+		$this->builtAppsHolder[] = $app;
+	}
+
+	/**
 	 * @return IApp[]
 	 */
 	protected function getApps() {
@@ -101,6 +120,11 @@ class Manager implements IManager {
 			}
 			$this->apps[] = $app;
 		}
+
+		$this->builtAppsHolder = [];
+		$registerAppEvent = new RegisterAppEvent($this);
+		$this->dispatcher->dispatch(AbstractRegisterAppEvent::NAME, $registerAppEvent);
+		$this->apps = array_merge($this->apps, $this->builtAppsHolder);
 
 		return $this->apps;
 	}
