@@ -382,7 +382,7 @@ trait Provisioning {
 		$client = new Client();
 		$options = [];
 		if ($this->currentUser === 'admin') {
-			$options['auth'] = $this->adminUser;
+			$options['auth'] = $this->getAuthOptionForUser('admin');
 		}
 
 		$options['body'] = [
@@ -455,7 +455,7 @@ trait Provisioning {
 		$client = new Client();
 		$options = [];
 		if ($this->currentUser === 'admin') {
-			$options['auth'] = $this->adminUser;
+			$options['auth'] = $this->getAuthOptionForUser('admin');
 		}
 
 		$this->response = $client->send($client->createRequest("DELETE", $fullUrl, $options));
