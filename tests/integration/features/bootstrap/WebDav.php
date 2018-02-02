@@ -1,6 +1,7 @@
 <?php
 
 use GuzzleHttp\Client as GClient;
+use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Message\ResponseInterface;
 use Sabre\DAV\Client as SClient;
@@ -223,27 +224,23 @@ trait WebDav {
 	}
 
 	/**
-	 * @When downloading file :fileName
+	 * @When the user downloads the file :fileName using the API
 	 * @param string $fileName
 	 */
-	public function downloadingFile($fileName) {
-		try {
-			$this->response = $this->makeDavRequest($this->currentUser, 'GET', $fileName, []);
-		} catch (\GuzzleHttp\Exception\ClientException $e) {
-			$this->response = $e->getResponse();
-		}
+	public function theUserDownloadsTheFileUsingTheAPI($fileName) {
+		$this->userDownloadsTheFileUsingTheAPI($this->currentUser, $fileName);
 	}
 
 	/**
 	 * @When user :user downloads the file :fileName using the API
-	 * @param string $user
 	 * @param string $fileName
+	 * @param string $user
 	 */
-	public function userDownloadsTheFile($user, $fileName) {
+	public function userDownloadsTheFileUsingTheAPI($user, $fileName) {
 		try {
 			$this->response = $this->makeDavRequest($user, 'GET', $fileName, []);
-		} catch (\GuzzleHttp\Exception\ClientException $e) {
-			$this->response = $e->getResponse();
+		} catch (BadResponseException $ex) {
+			$this->response = $ex->getResponse();
 		}
 	}
 
@@ -288,13 +285,13 @@ trait WebDav {
 	}
 
 	/**
-	 * @Then /^as "([^"]*)" gets properties of (file|folder|entry) "([^"]*)" with$/
+	 * @When /^user "([^"]*)" gets the following properties of (file|folder|entry) "([^"]*)" using the API$/
 	 * @param string $user
 	 * @param string $elementType unused
 	 * @param string $path
 	 * @param \Behat\Gherkin\Node\TableNode|null $propertiesTable
 	 */
-	public function asGetsPropertiesOfFolderWith($user, $elementType, $path, $propertiesTable) {
+	public function userGetsPropertiesOfFolder($user, $elementType, $path, $propertiesTable) {
 		$properties = null;
 		if ($propertiesTable instanceof \Behat\Gherkin\Node\TableNode) {
 			foreach ($propertiesTable->getRows() as $row) {
@@ -707,14 +704,14 @@ trait WebDav {
 		$file = \GuzzleHttp\Stream\Stream::factory(fopen($source, 'r'));
 		try {
 			$this->response = $this->makeDavRequest($user, "PUT", $destination, [], $file);
-		} catch (\GuzzleHttp\Exception\BadResponseException $e) {
+		} catch (BadResponseException $e) {
 			// 4xx and 5xx responses cause an exception
 			$this->response = $e->getResponse();
 		}
 	}
 
 	/**
-	 * @When user :user uploads file :source to :destination with chunks
+	 * @When user :user uploads file :source to :destination with chunks using the API
 	 * @param string $user
 	 * @param string $source
 	 * @param string $destination
@@ -763,7 +760,7 @@ trait WebDav {
 	/**
 	 * Uploading with old/new dav and chunked/non-chunked.
 	 *
-	 * @When user :user uploads file :source to :destination with all mechanisms
+	 * @When user :user uploads file :source to :destination with all mechanisms using the API
 	 * @param string $user
 	 * @param string $source
 	 * @param string $destination
@@ -775,7 +772,7 @@ trait WebDav {
 	/**
 	 * Overwriting with old/new dav and chunked/non-chunked.
 	 *
-	 * @When user :user overwrites file :source to :destination with all mechanisms
+	 * @When user :user overwrites file :source to :destination with all mechanisms using the API
 	 * @param string $user
 	 * @param string $source
 	 * @param string $destination
@@ -873,12 +870,12 @@ trait WebDav {
 	}
 
 	/**
-	 * @When User :user adds a file of :bytes bytes to :destination
+	 * @Given user :user has added file :destination of :bytes bytes
 	 * @param string $user
 	 * @param string $bytes
 	 * @param string $destination
 	 */
-	public function userAddsAFileTo($user, $bytes, $destination) {
+	public function userAddsAFileTo($user, $destination, $bytes) {
 		$filename = "filespecificSize.txt";
 		$this->createFileSpecificSize($filename, $bytes);
 		PHPUnit_Framework_Assert::assertFileExists("work/$filename");
@@ -889,7 +886,7 @@ trait WebDav {
 	}
 
 	/**
-	 * @When user :user uploads file with content :content to :destination
+	 * @Given user :user has uploaded file with content :content to :destination
 	 * @param string $user
 	 * @param string $content
 	 * @param string $destination
@@ -901,7 +898,7 @@ trait WebDav {
 		try {
 			$this->response = $this->makeDavRequest($user, "PUT", $destination, [], $file);
 			return $this->response->getHeader('oc-fileid');
-		} catch (\GuzzleHttp\Exception\BadResponseException $e) {
+		} catch (BadResponseException $e) {
 			// 4xx and 5xx responses cause an exception
 			$this->response = $e->getResponse();
 		}
@@ -927,7 +924,7 @@ trait WebDav {
 				['OC-Checksum' => $checksum],
 				$file
 			);
-		} catch (\GuzzleHttp\Exception\BadResponseException $e) {
+		} catch (BadResponseException $e) {
 			// 4xx and 5xx responses cause an exception
 			$this->response = $e->getResponse();
 		}
@@ -942,7 +939,7 @@ trait WebDav {
 	public function fileHasBeenDeleted($file, $user) {
 		try {
 			$this->response = $this->makeDavRequest($user, 'DELETE', $file, []);
-		} catch (\GuzzleHttp\Exception\BadResponseException $e) {
+		} catch (BadResponseException $e) {
 			// 4xx and 5xx responses cause an exception
 			$this->response = $e->getResponse();
 		}
@@ -985,7 +982,7 @@ trait WebDav {
 	/**
 	 * Old style chunking upload
 	 *
-	 * @When user :user uploads chunk file :num of :total with :data to :destination
+	 * @When user :user uploads chunk file :num of :total with :data to :destination using the API
 	 * @Given user :user has uploaded chunk file :num of :total with :data to :destination
 	 * @param string $user
 	 * @param int $num
@@ -1041,7 +1038,8 @@ trait WebDav {
 	}
 
 	/**
-	 * @Given user :user moves new chunk file with id :id to :dest
+	 * @When user :user moves new chunk file with id :id to :dest using the API
+	 * @Given user :user has moved new chunk file with id :id to :dest
 	 * @param string $user
 	 * @param string $id
 	 * @param string $dest
@@ -1088,20 +1086,7 @@ trait WebDav {
 
 		try {
 			$this->response = $this->makeDavRequest($user, 'MOVE', $source, $headers, null, "uploads");
-		} catch (\GuzzleHttp\Exception\BadResponseException $ex) {
-			$this->response = $ex->getResponse();
-		}
-	}
-
-	/**
-	 * @Given /^downloading file "([^"]*)" as "([^"]*)"$/
-	 * @param string $fileName
-	 * @param string $user
-	 */
-	public function downloadingFileAs($fileName, $user) {
-		try {
-			$this->response = $this->makeDavRequest($user, 'GET', $fileName, []);
-		} catch (\GuzzleHttp\Exception\ServerException $ex) {
+		} catch (BadResponseException $ex) {
 			$this->response = $ex->getResponse();
 		}
 	}
@@ -1118,7 +1103,8 @@ trait WebDav {
 	}
 
 	/**
-	 * @When user :user favorites element :path
+	 * @When user :user favorites element :path using the API
+	 * @Given user :user has favorited element :path
 	 * @param string $user
 	 * @param string $path
 	 */
@@ -1127,7 +1113,8 @@ trait WebDav {
 	}
 
 	/**
-	 * @When user :user unfavorites element :path
+	 * @When user :user unfavorites element :path using the API
+	 * @Given user :user has unfavorited element :path
 	 * @param string $user
 	 * @param string $path
 	 */
@@ -1163,7 +1150,7 @@ trait WebDav {
 	}
 
 	/**
-	 * @When user :user stores etag of element :path
+	 * @When user :user stores etag of element :path using the API
 	 * @Given user :user has stored etag of element :path
 	 * @param string $user
 	 * @param string $path
@@ -1198,7 +1185,7 @@ trait WebDav {
 	}
 
 	/**
-	 * @When connecting to dav endpoint
+	 * @When an unauthenticated client connects to the dav endpoint using the API
 	 */
 	public function connectingToDavEndpoint() {
 		try {
@@ -1209,7 +1196,7 @@ trait WebDav {
 	}
 
 	/**
-	 * @Then there are no duplicate headers
+	 * @Then there should be no duplicate headers
 	 */
 	public function thereAreNoDuplicateHeaders() {
 		$headers = $this->response->getHeaders();
@@ -1257,7 +1244,7 @@ trait WebDav {
 	}
 
 	/**
-	 * @When /^user "([^"]*)" deletes everything from folder "([^"]*)"$/
+	 * @When /^user "([^"]*)" deletes everything from folder "([^"]*)" using the API$/
 	 * @param string $user
 	 * @param string $folder
 	 */
@@ -1292,7 +1279,7 @@ trait WebDav {
 	}
 
 	/**
-	 * @Given /^user "([^"]*)" stores id of file "([^"]*)"$/
+	 * @Given /^user "([^"]*)" has stored id of file "([^"]*)"$/
 	 * @param string $user
 	 * @param string $path
 	 * @return void
@@ -1302,18 +1289,18 @@ trait WebDav {
 	}
 
 	/**
-	 * @Given /^user "([^"]*)" checks id of file "([^"]*)"$/
+	 * @Given /^user "([^"]*)" file "([^"]*)" should have the previously stored id$/
 	 * @param string $user
 	 * @param string $path
 	 * @return void
 	 */
-	public function userChecksFileIdForPath($user, $path) {
+	public function userFileShouldHaveStoredId($user, $path) {
 		$currentFileID = $this->getFileIdForPath($user, $path);
 		PHPUnit_Framework_Assert::assertEquals($currentFileID, $this->storedFileID);
 	}
 
 	/**
-	 * @When user :user restores version index :versionIndex of file :path
+	 * @When user :user restores version index :versionIndex of file :path using the API
 	 * @param string $user
 	 * @param int $versionIndex
 	 * @param string $path
