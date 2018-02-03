@@ -1157,7 +1157,7 @@ trait WebDav {
 	 */
 	public function userStoresEtagOfElement($user, $path) {
 		$propertiesTable = new \Behat\Gherkin\Node\TableNode([['{DAV:}getetag']]);
-		$this->asGetsPropertiesOfFolderWith($user, NULL, $path, $propertiesTable);
+		$this->userGetsPropertiesOfFolder($user, NULL, $path, $propertiesTable);
 		$pathETAG[$path] = $this->response['{DAV:}getetag'];
 		$this->storedETAG[$user] = $pathETAG;
 	}
@@ -1169,7 +1169,7 @@ trait WebDav {
 	 */
 	public function etagOfElementOfUserShouldNotHaveChanged($path, $user) {
 		$propertiesTable = new \Behat\Gherkin\Node\TableNode([['{DAV:}getetag']]);
-		$this->asGetsPropertiesOfFolderWith($user, NULL, $path, $propertiesTable);
+		$this->userGetsPropertiesOfFolder($user, NULL, $path, $propertiesTable);
 		PHPUnit_Framework_Assert::assertEquals($this->response['{DAV:}getetag'], $this->storedETAG[$user][$path]);
 	}
 
@@ -1180,7 +1180,7 @@ trait WebDav {
 	 */
 	public function etagOfElementOfUserShouldHaveChanged($path, $user) {
 		$propertiesTable = new \Behat\Gherkin\Node\TableNode([['{DAV:}getetag']]);
-		$this->asGetsPropertiesOfFolderWith($user, NULL, $path, $propertiesTable);
+		$this->userGetsPropertiesOfFolder($user, NULL, $path, $propertiesTable);
 		PHPUnit_Framework_Assert::assertNotEquals($this->response['{DAV:}getetag'], $this->storedETAG[$user][$path]);
 	}
 
